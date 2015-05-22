@@ -1,80 +1,60 @@
-﻿// Ulteriori informazioni su F# all'indirizzo http://fsharp.net
-// Per ulteriori informazioni, vedere il progetto 'Esercitazione su F#'.
-open System
+﻿open System
+open SFML.Graphics
+open SFML.Window
+open SFML.System
 
-let stampa_matrice t size =
-    Console.Clear()
-    printf "%A\n\n" 
-        <| Array2D.init size size ( fun x y -> 
-            match List.tryFind ((=) (x,y)) t with 
-                | None -> ' ' 
-                | _ -> '*'  )
-    System.Threading.Thread.Sleep(1000)
-    //Console.ReadKey() |> ignore
+let crea_griglia size = List.init (size*size-1) ( fun x -> ( x%size , x/size ) ) 
 
-let rec life table size max_iter stampa = 
-    
-    let elimina_superflui mappa elemento  =  
-
+let life table size = 
+    let ci_sara mappa elemento  =  
         let conta_vicini mappa elemento =  
-
             let vicini (r,c) = [ (r+1,c) ; (r-1,c) ; (r,c+1) ; (r,c-1) ; (r+1,c+1) ; (r-1,c+1) ; (r+1,c-1) ; (r-1,c-1) ]
-
-            vicini elemento 
-                |> List.map ( fun x -> List.tryFind ( (=) x ) mappa )
-                |> List.sumBy ( fun x -> match x with | None -> 0 | _ -> 1 ) 
-        
+            elemento 
+                |> vicini
+                |> List.sumBy ( fun x -> match List.tryFind ((=) x) mappa  with | None -> 0 | _ -> 1 )
         let resta_viva = function
             | 2 | 3 -> true
             | _ -> false 
-
         let resuscita = function
             | 3 -> true
             | _ -> false
-
-        let n = conta_vicini mappa elemento 
-
         match  List.tryFind ( (=) elemento ) mappa     with 
-            | Some _ -> resta_viva n 
-            | None   -> resuscita n
-
-    let temp = List.init (size*size-1) ( fun x -> ( x%size , x/size ) ) 
-                |> List.filter ( elimina_superflui  table )  
-    do stampa temp size
-    match max_iter > 0 with
-        | true ->  life temp size (max_iter-1) stampa
-        | false -> temp
+            | Some _ -> elemento |> conta_vicini mappa |> resta_viva  
+            | None   -> elemento |> conta_vicini mappa |> resuscita 
+    crea_griglia size |> List.filter ( ci_sara table )  
 
 let crea_random size = 
     let rnd = System.Random()
-    List.init ( size*size-1 ) (fun x -> ( x%size, x/size ) ) 
-        |> List.filter ( fun _ -> rnd.Next(2) = 1 )
+    crea_griglia size |> List.filter ( fun _ -> rnd.Next(2) = 1 )
+
+let set_cella (prototipo : RectangleShape) (x : int ,y : int) =
+    let c = new RectangleShape(prototipo)
+    c.Position <- Vector2f(prototipo.Size.X * float32 x , prototipo.Size.Y * float32 y)
+    c
 
 [<EntryPoint>]
 let main arg =
-    let size = 10
-    let table = crea_random size //[(1,1);(1,2);(1,3)]
-    //tabella size ripetizioni modo_stampa
-    let _ = life table size 100 stampa_matrice
+    let size = 50
+
+    let v_size = 500u
+    let v_cell_size = float32 v_size / float32 size
+
+    let win = new RenderWindow( VideoMode(v_size,v_size),"Game of Life")
+    win.Closed.AddHandler( fun s a ->  Environment.Exit 0 ) 
+    win.SetFramerateLimit(4u)
+
+    let cella = new RectangleShape(Vector2f(v_cell_size,v_cell_size)) 
+    cella.FillColor <- Color.Green   
+
+    let draw = set_cella cella>>(fun x -> win.Draw(x))
+
+    let rec main_loop t = 
+        win.DispatchEvents()
+        win.Clear()
+        let tmp = life t size
+        tmp |> List.iter draw
+        win.Display()
+        main_loop tmp
+
+    crea_random size |> main_loop
     0
-
-(*let stampa_schermo ( form : Form) moltiplicatore  t size =
-    form.Paint.Add(fun draw -> draw.Graphics.FillRectangle(Brushes.Black,0,0,moltiplicatore,moltiplicatore))
-    t |>  List.iter 
-            ( fun (x,y)  -> 
-                form.Paint.Add(fun draw -> draw.Graphics.FillRectangle(Brushes.Black,x*moltiplicatore,y*moltiplicatore,moltiplicatore,moltiplicatore)))  
-    System.Threading.Thread.Sleep(1000)
-*)
-
-(*
-let table = [(1,1);(1,2);(1,3)]
-let size = 10
-let moltiplicatore = 30
-let form = new Form(
-            Height = size*moltiplicatore,
-            Visible = true,
-            Text = "My form"
-            ) 
-let stampa t (size : int ) = stampa_schermo form moltiplicatore t size 
-//Application.Run(form)
-*)
