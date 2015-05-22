@@ -3,29 +3,29 @@ open SFML.Graphics
 open SFML.Window
 open SFML.System
 
-let crea_griglia size = List.init (size*size-1) ( fun x -> ( x%size , x/size ) ) 
+let crea_griglia size = Array.init (size*size-1) ( fun x -> ( x%size , x/size ) ) 
 
 let life table size = 
     let ci_sara mappa elemento  =  
         let conta_vicini mappa elemento =  
-            let vicini (r,c) = [ (r+1,c) ; (r-1,c) ; (r,c+1) ; (r,c-1) ; (r+1,c+1) ; (r-1,c+1) ; (r+1,c-1) ; (r-1,c-1) ]
+            let vicini (r,c) = [| (r+1,c) ; (r-1,c) ; (r,c+1) ; (r,c-1) ; (r+1,c+1) ; (r-1,c+1) ; (r+1,c-1) ; (r-1,c-1) |]
             elemento 
                 |> vicini
-                |> List.sumBy ( fun x -> match List.tryFind ((=) x) mappa  with | None -> 0 | _ -> 1 )
+                |> Array.sumBy ( fun x -> match Array.tryFind ((=) x) mappa  with | None -> 0 | _ -> 1 )
         let resta_viva = function
             | 2 | 3 -> true
             | _ -> false 
         let resuscita = function
             | 3 -> true
             | _ -> false
-        match  List.tryFind ( (=) elemento ) mappa     with 
+        match  Array.tryFind ( (=) elemento ) mappa     with 
             | Some _ -> elemento |> conta_vicini mappa |> resta_viva  
             | None   -> elemento |> conta_vicini mappa |> resuscita 
-    crea_griglia size |> List.filter ( ci_sara table )  
+    crea_griglia size |> Array.filter ( ci_sara table )  
 
 let crea_random size = 
     let rnd = System.Random()
-    crea_griglia size |> List.filter ( fun _ -> rnd.Next(2) = 1 )
+    crea_griglia size |> Array.filter ( fun _ -> rnd.Next(2) = 1 )
 
 let set_cella (prototipo : RectangleShape) (x : int ,y : int) =
     let c = new RectangleShape(prototipo)
@@ -52,7 +52,7 @@ let main arg =
         win.DispatchEvents()
         win.Clear()
         let tmp = life t size
-        tmp |> List.iter draw
+        tmp |> Array.iter draw
         win.Display()
         main_loop tmp
 
