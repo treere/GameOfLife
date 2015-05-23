@@ -3,7 +3,7 @@ open SFML.Graphics
 open SFML.Window
 open SFML.System
 
-let crea_griglia size = Array.init (size*size-1) ( fun x -> ( x%size , x/size ) ) 
+let crea_griglia size = Array.Parallel.init (size*size-1) ( fun x -> ( x%size , x/size ) ) 
 
 let life table size = 
     let ci_sara mappa elemento  =  
@@ -27,10 +27,6 @@ let crea_random size =
     let rnd = System.Random()
     crea_griglia size |> Array.filter ( fun _ -> rnd.Next(2) = 1 )
 
-let set_cella (prototipo : RectangleShape) (x : int ,y : int) =
-    let c = new RectangleShape(prototipo)
-    c.Position <- Vector2f(prototipo.Size.X * float32 x , prototipo.Size.Y * float32 y)
-    c
 
 [<EntryPoint>]
 let main arg =
@@ -46,7 +42,9 @@ let main arg =
     let cella = new RectangleShape(Vector2f(v_cell_size,v_cell_size)) 
     cella.FillColor <- Color.Green   
 
-    let draw = set_cella cella>>(fun x -> win.Draw(x))
+    let draw (x,y)= //set_cella cella>>(fun x -> win.Draw(x))
+        cella.Position <- Vector2f(cella.Size.X * float32 x , cella.Size.Y * float32 y)
+        win.Draw(cella)
 
     let rec main_loop t = 
         win.DispatchEvents()
