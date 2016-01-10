@@ -12,12 +12,8 @@ let life table size =
             elemento 
                 |> vicini
                 |> Array.sumBy ( fun x -> match Array.tryFind ((=) x) mappa  with | None -> 0 | _ -> 1 )
-        let resta_viva = function
-            | 2 | 3 -> true
-            | _ -> false 
-        let resuscita = function
-            | 3 -> true
-            | _ -> false
+        let resta_viva x = x = 2 || x = 3 
+        let resuscita = x = 3
         match  Array.tryFind ( (=) elemento ) mappa     with 
             | Some _ -> elemento |> conta_vicini mappa |> resta_viva  
             | None   -> elemento |> conta_vicini mappa |> resuscita 
